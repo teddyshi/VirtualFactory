@@ -1,0 +1,101 @@
+
+body {
+	width: 100%;
+	overflow: hidden;
+	background-color: #61A758; 
+}
+
+.slideIn {
+	width:500px; 
+	height:100%; 
+	opacity: 0.8;
+	position:absolute;
+	right:-300px;
+	background-color: #CEC8C8;
+	font-family: Tahoma;
+}
+
+.slideInTitle {
+	font-size: 30px;
+	text-align: center;
+	padding: 10px 0 10px 0;
+	border-bottom: 1px black solid;
+}
+
+.slideInRow {
+	padding: 10px 0 10px 0;
+	font-size: 14px;
+}
+
+.slideInItem {
+	width: 48%;
+	display: inline-block;
+}
+
+.slideInRow b {
+	padding-left: 5%;
+	width: 40%;
+	display: inline-block;
+	overflow: hidden;
+}
+
+.slideInRow p {
+	padding-left: 5%;
+	width: 50%;
+	display: inline-block;
+	margin: 0;
+}
+
+.slideInCollapse {
+	border-top: 1px black solid;
+}
+
+.slideInCollapseTitle {
+	padding-left: 2.5%;
+	font-size: 15px;
+	height: 30px;
+}
+
+.slideInCollapseTitle b {
+	display: inline-block;
+	line-height: 30px;
+	height: 30px;
+}
+
+.slideInCollapseTitle img {
+	width: 30px;
+	height: 30px;
+	display: inline-block;
+	vertical-align:middle;
+}
+
+.slideInCollapseContent {
+	padding-left: 2.5%;
+	display: none;
+}
+
+@-webkit-keyframes rotate {
+	100% {
+    	-webkit-transform: rotate(90deg);
+	}
+}
+
+@-webkit-keyframes rotateBack {
+	0% {
+		-webkit-transform: rotate(90deg);
+	},
+	100% {
+    	-webkit-transform: rotate(0deg);
+	}
+}
+
+.slideInCollapseContent table {
+	margin: 5px 0 10px 20px;
+	font-size: 15px;
+}
+
+.slideInCollapseContent th {
+	margin: 5px 0 5px 20px;
+	font-style: italic;
+	padding: 1px 5px 1px 5px;
+}
