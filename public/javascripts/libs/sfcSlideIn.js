@@ -54,7 +54,7 @@
 						</div>
 						<div class="slideInRow">
 							<div class="slideInItem">
-								<b>SFC:</b><p>${data.sfc}</p>
+								<b>SFC:</b><p data="sfc">${data.sfc}</p>
 							</div>
 							<div class="slideInItem">
 								<b>Status:</b><p>${data.status}</p>
