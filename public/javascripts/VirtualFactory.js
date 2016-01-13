@@ -14,6 +14,12 @@ VF.render = function() {
 	VF.renderer.render( VF.scene, VF.camera );
 };
 
+VF.addLight = function() {
+	var light = new THREE.DirectionalLight( 0xffffff, 1 );
+	light.position.set( 0, -650, 560 ).normalize();
+	VF.scene.add( light );
+}
+
 VF.animate = function() {
 	requestAnimationFrame(VF.animate);
 	VF.controls.update();
@@ -57,16 +63,17 @@ VF.install = function(){
 	VF.raycaster = new THREE.Raycaster();
 	VF.renderer = new THREE.WebGLRenderer();
 	VF.renderer.setPixelRatio( window.devicePixelRatio );
-	VF.renderer.setSize( window.innerWidth, window.innerHeight );	
+	VF.renderer.setSize( window.innerWidth, window.innerHeight );
 	VF.controls = new THREE.OrbitControls( VF.camera ,document,VF.renderer.domElement);
 	VF.controls.damping = 2;
 	VF.controls.addEventListener('change', VF.render );
 	VF.container.append( VF.renderer.domElement );
-	
+
 
 
 	//add assist plane and grid helper
 	VF.addAssist();
+	VF.addLight();
 
 	//events
 	VF.renderer.domElement.addEventListener( 'dblclick', VF.onDocumentDblClick, false );

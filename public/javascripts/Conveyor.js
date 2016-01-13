@@ -19,7 +19,7 @@ function createConveyorPartTwo(){
 	var yLength = 100;
 	var zLength = 50;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 64, 16, 16);
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x00ff00, shading: THREE.FlatShading, overdraw: 0.5} );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.z = zLength/2;
 	cube.name='conveyorPartTwo';
@@ -31,7 +31,7 @@ function createConveyorPartOne(){
 	var yLength = 550;
 	var zLength = 50;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 16, 64, 16);
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x00ff00, shading: THREE.FlatShading, overdraw: 0.5} );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.z = zLength/2;
 	cube.position.x = 450;

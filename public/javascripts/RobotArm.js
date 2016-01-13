@@ -1,4 +1,4 @@
-var RobotArm = function(vf,name,position){	
+var RobotArm = function(vf,name,position){
 	this.virtualFactory =  vf;
 	this.name = name;
 	this.base = createBase();
@@ -14,7 +14,7 @@ var RobotArm = function(vf,name,position){
 	if(position){
 		baseGroup.position.copy(position);
 	}
-	
+
 	baseGroup.name='base_C';
 	baseGroup.add(this.base);
 	var rootJoint_C = new THREE.Object3D();
@@ -60,7 +60,7 @@ var RobotArm = function(vf,name,position){
 		// 	}
 		// });
 //after doing that you will see the arm stopps after a short time moving.
-//then try to do this: 
+//then try to do this:
 //VF.robot1.controller.catch();
 //Then the arm will keep moving for a short time and will stop again,
 //Then try to do this:
@@ -130,7 +130,7 @@ function buildController(arm){
 			doAction:function(controller){
 				controller.rootJointRotateByYaxis(-Math.PI*0.005);
 				controller.secondJointRotateByYaxis(Math.PI*0.008);
-				controller.rootJointRotateByZaxis(-Math.PI*0.01);	
+				controller.rootJointRotateByZaxis(-Math.PI*0.01);
 				controller.thirdJointRotateByYaxis(-Math.PI*0.004);
 			},
 			name :'doRelease'
@@ -141,7 +141,7 @@ function buildController(arm){
 				controller.rootJointRotateByYaxis(Math.PI*0.005);
 				controller.secondJointRotateByYaxis(-Math.PI*0.008);
 				controller.rootJointRotateByZaxis(Math.PI*0.01);
-				controller.thirdJointRotateByYaxis(Math.PI*0.004);		
+				controller.thirdJointRotateByYaxis(Math.PI*0.004);
 			},
 			name : 'doReCatch'
 		}
@@ -204,7 +204,7 @@ function buildController(arm){
 
 function createBase(){
 	var geometry = new THREE.CylinderGeometry( 50, 50, 15, 64 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xe8e8e8} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x2194ce, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.rotation.x = Math.PI*0.5;
 	cylinder.name = 'base';
@@ -216,7 +216,7 @@ function createRootJoint(){
 	var yLength = 20;
 	var zLength = 40;
 	var geometry = new THREE.CylinderGeometry( xLength, yLength, zLength, 32 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0xffff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.scale.x = 1.3;
 	cylinder.name = 'firstJoint';
@@ -228,7 +228,7 @@ function createFirstTrunk(){
 	var yLength = 25;
 	var zLength = 150;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 16, 16, 64);
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x00ff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.z = zLength/2;
 	cube.name='firstTrunk';
@@ -237,7 +237,7 @@ function createFirstTrunk(){
 
 function createSecondJoint(){
 	var geometry = new THREE.CylinderGeometry( 20, 20, 40, 32 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0xffff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.position.z=155;
 	cylinder.name='secondJoint';
@@ -250,7 +250,7 @@ function createSecondTrunk(){
 	var zLength = 25;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 64, 16, 16);
 	//geometry.applyMatrix( new THREE.Matrix4().makeTranslation(xLength/2, 0, 0 ) );
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x00ff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.x=75;
 	cube.name='secondTrunk';
@@ -259,7 +259,7 @@ function createSecondTrunk(){
 
 function createThirdJoint(){
 	var geometry = new THREE.SphereGeometry(20, 32, 32, 0, Math.PI*2, 0, Math.PI)
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0xffff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.name='thirdJoint';
 	cylinder.position.x = 150;
@@ -268,7 +268,7 @@ function createThirdJoint(){
 
 function createSucker(){
 	var geometry = new THREE.CylinderGeometry( 5, 5, 40, 64 );
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshLambertMaterial( {color: 0x00ff00, shading: THREE.FlatShading, overdraw: 0.5 } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.name='sucker';
 	cylinder.rotation.x = Math.PI*0.5;
