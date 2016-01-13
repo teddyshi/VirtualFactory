@@ -38,7 +38,6 @@ function buildController(conveyor){
 							conveyor.conveyorPartTwo.footPrint
 						]
 					};
-
 	controller.putObject = function(key,thing){
 		this.conveyor.objects.put(key,thing);
 	};
@@ -138,7 +137,7 @@ function createConveyorPartTwo(rootPosition,conveyorParam){
 	var yLength = conveyorParam.partTwo.width;
 	var zLength = conveyorParam.partTwo.height;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 64, 16, 16);
-	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0xD2D5DA, overdraw: 0.1, shading: THREE.SmoothShading } ));
+	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x947874, overdraw: 0.1, shading: THREE.SmoothShading } ));
 	cube.position.z = zLength/2;
 	cube.name='conveyorPartTwo';
 	cube.footPrint = {
@@ -163,7 +162,7 @@ function createConveyorPartOne(rootPosition,conveyorParam){
 	var partTwoWidth = conveyorParam.partTwo.width;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 16, 64, 16);
 	var material = new THREE.MeshNormalMaterial();
-	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0xD2D5DA, overdraw: 0.1, shading: THREE.SmoothShading } ));
+	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x947874, overdraw: 0.1, shading: THREE.SmoothShading } ));
 	cube.position.z = zLength/2;
 	cube.position.x = partTwoLength/2-xLength/2;
 	cube.position.y = -partTwoWidth/2-yLength/2;

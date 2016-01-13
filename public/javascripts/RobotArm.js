@@ -46,9 +46,7 @@ var RobotArm = function(vf,name,position){
 
 //how to call runModeOne:
 		// VF.robot1.controller.runModeOne({
-		// 	catchDuration:800,
-		// 	reCatchDuration:1000,
-		// 	releaseDuration:1000,
+		// 	startInTime:800,
 		// 	doReleaseSignal:function(controller){
 		// 		return 'catched'===controller.suckerStatus;
 		// 	},
@@ -74,7 +72,20 @@ function buildController(arm){
 					arm:arm,
 					stop:false,
 					status:'run',
-					suckerStatus:'empty'
+					suckerStatus:'empty',
+					cycleFootPrint:{
+							rootJointRotateByYaxis:0,
+							secondJointRotateByYaxis:0,
+							rootJointRotateByZaxis:0,
+							thirdJointRotateByYaxis:0
+						},
+					cycleFootPrintTarget:{
+							rootJointRotateByYaxis: -0.706858347057704, 
+							secondJointRotateByYaxis: 1.1309733552923253, 
+							rootJointRotateByZaxis: -1.413716694115408, 
+							thirdJointRotateByYaxis: -0.42411500823462245
+						},
+					lastRotateResult:''
 					};
 	controller.catch = function(){
 		this.suckerStatus = 'catched';
@@ -85,63 +96,112 @@ function buildController(arm){
 	controller.stop = function(){
 		this.stop = true;
 	};
-	controller.rootJointRotateByZaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('rootJoint_C');
+	controller.rootJointRotateByZaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('rootJoint_C');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(0,0,1).normalize(),angle);
 	};
-	controller.rootJointRotateByXaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('rootJoint_N');
+	controller.rootJointRotateByXaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('rootJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(1,0,0).normalize(),angle);
 	};
-	controller.rootJointRotateByYaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('rootJoint_N');
+	controller.rootJointRotateByYaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('rootJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(0,1,0).normalize(),angle);
 	};
-	controller.secondJointRotateByYaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('secondJoint_N');
+	controller.secondJointRotateByYaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('secondJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(0,1,0).normalize(),angle);
 	};
-	controller.secondJointRotateByXaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('secondJoint_N');
+	controller.secondJointRotateByXaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('secondJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(1,0,0).normalize(),angle);
 	};
-	controller.thirdJointRotateByYaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('thirdJoint_N');
+	controller.thirdJointRotateByYaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('thirdJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(0,1,0).normalize(),angle);
 	};
-	controller.thirdJointRotateByXaxis = function(angle){
-		var rootJoint_C = this.arm.robotArm.getObjectByName('thirdJoint_N');
+	controller.thirdJointRotateByXaxis = function(controller,angle){
+		var rootJoint_C = controller.arm.robotArm.getObjectByName('thirdJoint_N');
 		rootJoint_C.rotateOnAxis(new THREE.Vector3(1,0,0).normalize(),angle);
+	};
+	controller.rotateAndFix = function(controller,keyProp,angle,action,result){
+		//1:keep rotating; 0:stop
+		var rs;
+		var targetValue = ('doRelease'===action?controller.cycleFootPrintTarget[keyProp]:0);
+		var currentValue = controller.cycleFootPrint[keyProp];
+		if(Math.abs(targetValue-currentValue)>=Math.abs(angle)){
+			rs = 1;
+			controller[keyProp].call(this,controller,angle);
+			controller.cycleFootPrint[keyProp] += angle;
+		}else if(targetValue===currentValue){
+			rs = 0;
+		}else{
+			controller[keyProp].call(this,controller,targetValue-currentValue);
+			controller.cycleFootPrint[keyProp] += targetValue-currentValue;
+			rs = 0;
+		}
+		result[keyProp] = rs;
+	};
+
+	controller.doAction= function(controller,moveParams,action){
+		var result = {
+			rootJointRotateByYaxis:'',
+			secondJointRotateByYaxis:'',
+			rootJointRotateByZaxis:'',
+			thirdJointRotateByYaxis:''
+		};
+		for( i in moveParams){
+			controller.rotateAndFix.call(this,controller,i,moveParams[i],action,result)
+		}
+		var keepRotating = 0;
+		for(prop in result){
+			keepRotating |= result[prop];
+		}
+		controller.lastRotateResult=(1===keepRotating?'KEEP_ROTATE':'STOP');
 	};
 
 	//mode one is the default mode for this robot arm
 	//Normally it can finish the process 'catch - release - recatch' along a fixed footprint
-	//You can also change the footprint a little by changing the parameters:catchDuration,reCatchDuration,releaseDuration
 	controller.runModeOne = function(process){
 		var doCatch = {
 			doAction:function(controller){
-				controller.rootJointRotateByYaxis(Math.PI*0.008);
-				controller.secondJointRotateByYaxis(-Math.PI*0.008);
+				controller.rootJointRotateByYaxis(controller,Math.PI*0.006);
+				controller.secondJointRotateByYaxis(controller,-Math.PI*0.004);
+				controller.thirdJointRotateByYaxis(controller,-Math.PI*0.0025);
 			},
 			name:'doCatch'
 		}
 
 		var doRelease = {
 			doAction:function(controller){
-				controller.rootJointRotateByYaxis(-Math.PI*0.005);
-				controller.secondJointRotateByYaxis(Math.PI*0.008);
-				controller.rootJointRotateByZaxis(-Math.PI*0.01);	
-				controller.thirdJointRotateByYaxis(-Math.PI*0.004);
+				controller.doAction.call(
+						this,
+						controller,
+						{
+							rootJointRotateByYaxis:-Math.PI*0.005,
+							secondJointRotateByYaxis:Math.PI*0.008,
+							rootJointRotateByZaxis:-Math.PI*0.01,
+							thirdJointRotateByYaxis:-Math.PI*0.003
+						},
+						doRelease.name
+				);
 			},
 			name :'doRelease'
 		}
 
 		var doReCatch = {
 			doAction:function(controller){
-				controller.rootJointRotateByYaxis(Math.PI*0.005);
-				controller.secondJointRotateByYaxis(-Math.PI*0.008);
-				controller.rootJointRotateByZaxis(Math.PI*0.01);
-				controller.thirdJointRotateByYaxis(Math.PI*0.004);		
+				controller.doAction.call(
+						this,
+						controller,
+						{
+							rootJointRotateByYaxis:Math.PI*0.005,
+							secondJointRotateByYaxis:-Math.PI*0.008,
+							rootJointRotateByZaxis:Math.PI*0.01,
+							thirdJointRotateByYaxis:Math.PI*0.003
+						},
+						doReCatch.name
+				);
 			},
 			name : 'doReCatch'
 		}
@@ -155,56 +215,64 @@ function buildController(arm){
 				return;
 			}
 			var nextFunction = '';
-			var currentDuration = 0;
 			//signal method is a judgement which decides whether go to the next action.
 			var signalMethod = '';
 			if('doCatch'==params.doFunction.name){
 				signalMethod = params.process.doReleaseSignal;
 				nextFunction = params.doRelease;
-				currentDuration = params.process.catchDuration;
-			}else if('doRelease'==params.doFunction.name){
-				signalMethod = params.process.doReCatchSignal;
-				nextFunction = params.doReCatch;
-				currentDuration = params.process.reCatchDuration;
-			}else if('doReCatch'==params.doFunction.name){
-				signalMethod = params.process.doReleaseSignal;
-				nextFunction = params.doRelease;
-				currentDuration = params.process.releaseDuration;
-			}
-			if((new Date().getTime() - params.startTime)<currentDuration){
-				params.doFunction.doAction.call(this,controller);
-				controller.arm.virtualFactory.render();
-				setTimeout(move,20,params);
-			}else{
-				if(signalMethod.call(this,controller)){
-					params.doFunction = nextFunction;
-					params.startTime = new Date().getTime();
+				if((new Date().getTime() - params.startTime)<params.process.startInTime){
+					params.doFunction.doAction.call(this,controller);
+					controller.arm.virtualFactory.render();
+					setTimeout(move,20,params);
+				}else{
+					controller.lastRotateResult='STOP';
+					if(signalMethod.call(this,controller)){
+						params.doFunction = nextFunction;
+						controller.lastRotateResult='KEEP_ROTATE';
+					}				
+					setTimeout(move,20,params);
 				}
-				setTimeout(move,50,params);
+			}else{
+				if('KEEP_ROTATE'=== controller.lastRotateResult){
+					params.doFunction.doAction.call(this,controller);
+					controller.arm.virtualFactory.render();
+					setTimeout(move,20,params);
+				}else{
+						if('doRelease'== params.doFunction.name){
+							signalMethod = params.process.doReCatchSignal;
+							nextFunction = params.doReCatch;
+						}else if('doReCatch'==params.doFunction.name){
+							signalMethod = params.process.doReleaseSignal;
+							nextFunction = params.doRelease;
+						}
+					if(signalMethod.call(this,controller)){
+						params.doFunction = nextFunction;
+						controller.lastRotateResult='KEEP_ROTATE';
+					}
+					setTimeout(move,20,params);
+				}
 			}
+
 		};
 
-		setTimeout(move,30,{
-							controller:this,
-							startTime:new Date().getTime(),
-							process:process,
-							doCatch:doCatch,
-							doReCatch:doReCatch,
-							doRelease:doRelease,
-							doFunction:doCatch
-						});
+		move({
+				controller:this,
+				startTime:new Date().getTime(),
+				process:process,
+				doCatch:doCatch,
+				doReCatch:doReCatch,
+				doRelease:doRelease,
+				doFunction:doCatch
+			});
 	}
 
 	return controller;
 };
 
 
-
-
-
 function createBase(){
 	var geometry = new THREE.CylinderGeometry( 50, 50, 15, 64 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xe8e8e8} );
+	var material = new THREE.MeshPhongMaterial( { color: 0x4285F4, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.rotation.x = Math.PI*0.5;
 	cylinder.name = 'base';
@@ -216,7 +284,7 @@ function createRootJoint(){
 	var yLength = 20;
 	var zLength = 40;
 	var geometry = new THREE.CylinderGeometry( xLength, yLength, zLength, 32 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0x4285F4, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.scale.x = 1.3;
 	cylinder.name = 'firstJoint';
@@ -228,7 +296,7 @@ function createFirstTrunk(){
 	var yLength = 25;
 	var zLength = 150;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 16, 16, 64);
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0xFE6502, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.z = zLength/2;
 	cube.name='firstTrunk';
@@ -237,7 +305,7 @@ function createFirstTrunk(){
 
 function createSecondJoint(){
 	var geometry = new THREE.CylinderGeometry( 20, 20, 40, 32 );
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0x4285F4, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.position.z=155;
 	cylinder.name='secondJoint';
@@ -249,8 +317,7 @@ function createSecondTrunk(){
 	var yLength = 25;
 	var zLength = 25;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 64, 16, 16);
-	//geometry.applyMatrix( new THREE.Matrix4().makeTranslation(xLength/2, 0, 0 ) );
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0xFE6502, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cube = new THREE.Mesh( geometry, material );
 	cube.position.x=75;
 	cube.name='secondTrunk';
@@ -259,7 +326,7 @@ function createSecondTrunk(){
 
 function createThirdJoint(){
 	var geometry = new THREE.SphereGeometry(20, 32, 32, 0, Math.PI*2, 0, Math.PI)
-	var material = new THREE.MeshNormalMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0x4285F4, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.name='thirdJoint';
 	cylinder.position.x = 150;
@@ -268,7 +335,7 @@ function createThirdJoint(){
 
 function createSucker(){
 	var geometry = new THREE.CylinderGeometry( 5, 5, 40, 64 );
-	var material = new THREE.MeshNormalMaterial( {color: 0x00ff00} );
+	var material = new THREE.MeshPhongMaterial( { color: 0xFE6502, overdraw: 0.5, shading: THREE.SmoothShading } );
 	var cylinder = new THREE.Mesh( geometry, material );
 	cylinder.name='sucker';
 	cylinder.rotation.x = Math.PI*0.5;
