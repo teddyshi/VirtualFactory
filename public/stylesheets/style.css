@@ -6,3 +6,25 @@ body {
 a {
   color: #00B7FF;
 }
+
+div.menuBar{
+	width:100px;
+	height:100%;
+	position:absolute;
+	left:0;
+	top:0;
+	display:block;
+	background-color:#FFFFFF;
+	opacity:0.5;
+}
+
+div.menuItem {
+	width:100px;
+	height:50px;
+	position:absolute;
+	left:0;
+	display:block;
+	text-align:center;
+	line-height:50px;
+	cursor:pointer;
+}

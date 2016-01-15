@@ -18,7 +18,7 @@ var RobotArm = function(vf,name,position){
 	baseGroup.name='base_C';
 	baseGroup.add(this.base);
 	var rootJoint_C = new THREE.Object3D();
-	rootJoint_C.position.z = 20;
+	rootJoint_C.position.z = 15;
 	rootJoint_C.name = 'rootJoint_C';
 	rootJoint_C.add(this.rootJoint);
 	var rootJoint_N = new THREE.Object3D();
@@ -47,32 +47,32 @@ var RobotArm = function(vf,name,position){
 //how to call runModeOne:
 		// VF.robot1.controller.runModeOne({
 		// 	startInTime:800,
-		// 	doReleaseSignal:function(controller){
+		// 	cooperator:{
+		// 	 	conveyor:VF.conveyor
+		// 	},
+		// 	doReleaseSignal:function(controller,cooperator){
+		// 		controller.catchOnConveyor(controller,cooperator);
 		// 		return 'catched'===controller.suckerStatus;
 		// 	},
-		// 	doReCatchSignal:function(controller){
+		// 	doReCatchSignal:function(controller,cooperator){
+		//		controller.releaseToPackage(controller,cooperator);
 		// 		return 'empty'===controller.suckerStatus;
 		// 	},
-		// 	stopCallBack:function(controller){
-		// 		console.log('stopped...');
+		// 	stopCallBack:function(controller,cooperator){
+		// 		console.log('stop..');
+		// 	}
+		// 	resumeCallBack:function(controller,cooperator){
+		// 		console.log('resume..');
 		// 	}
 		// });
-//after doing that you will see the arm stopps after a short time moving.
-//then try to do this: 
-//VF.robot1.controller.catch();
-//Then the arm will keep moving for a short time and will stop again,
-//Then try to do this:
-//VF.robot1.controller.release();
-//See the arm will try to catch a object again.
-//You will see,this mode is designed based on a event-driving mechanism
-//It provides the chance of process controlling to you as input parameters.
 
 function buildController(arm){
 	var controller={
 					arm:arm,
-					stop:false,
 					status:'run',
 					suckerStatus:'empty',
+					stopSignal:false,
+					resumeSignal:false,
 					cycleFootPrint:{
 							rootJointRotateByYaxis:0,
 							secondJointRotateByYaxis:0,
@@ -94,7 +94,12 @@ function buildController(arm){
 		this.suckerStatus = 'empty';
 	};
 	controller.stop = function(){
-		this.stop = true;
+		this.status = 'stopped';
+		this.stopSignal = true;
+	};
+	controller.resume = function(){
+		this.status = 'run';
+		this.resumeSignal = true;
 	};
 	controller.rootJointRotateByZaxis = function(controller,angle){
 		var rootJoint_C = controller.arm.robotArm.getObjectByName('rootJoint_C');
@@ -160,6 +165,76 @@ function buildController(arm){
 		controller.lastRotateResult=(1===keepRotating?'KEEP_ROTATE':'STOP');
 	};
 
+	controller.catchOnConveyor = function(controller,cooperator){
+		var sucker = controller.arm.robotArm.getObjectByName('sucker');
+		var thirdJoint_N = controller.arm.robotArm.getObjectByName('thirdJoint_N');
+		var catchParams = {
+			sucker:sucker,
+			suckerHolder:thirdJoint_N,
+			controller:controller,
+			conveyor:cooperator.conveyor,
+			scene:controller.arm.virtualFactory.scene
+		};
+
+		var doCatch = function(catchParams){
+			var conveyor = catchParams.conveyor;
+			var stoppedObjectXLengthSum = conveyor.controller.getStoppedObjectXLengthSum(conveyor.controller);	
+			if(conveyor.objects.isEmpty()||stoppedObjectXLengthSum<=0){
+				return;
+			}
+			var suckerHolder = catchParams.suckerHolder;
+			var sucker = catchParams.sucker;
+			var scene = catchParams.scene;
+			suckerHolder.updateMatrixWorld();
+			THREE.SceneUtils.detach(sucker,suckerHolder,scene);
+			var rayCaster = new THREE.Raycaster( sucker.position, new THREE.Vector3(0,0,-1).normalize(), 0, 100 );
+			var intersection = rayCaster.intersectObjects(conveyor.objects.values(),false);
+			if(intersection.length==0){
+				suckerHolder.updateMatrixWorld();
+				THREE.SceneUtils.attach(sucker, scene, suckerHolder);
+				return;
+			}
+			var catchedObject = intersection[0].object;
+			suckerHolder.updateMatrixWorld();
+			THREE.SceneUtils.attach(sucker, scene, suckerHolder);
+			THREE.SceneUtils.attach(catchedObject, scene, suckerHolder);
+			catchParams.controller.catchedObjectName = catchedObject.name;
+			conveyor.objects.remove(catchedObject.name);			
+			catchParams.controller.catch();
+		};
+		doCatch(catchParams);
+	};
+
+	controller.releaseToPackage = function(controller,cooperator){
+		if('catched'!==controller.suckerStatus||''===controller.catchedObjectName){
+			return;
+		}
+		var virtualFactory = controller.arm.virtualFactory;
+		var sucker = controller.arm.robotArm.getObjectByName('sucker');
+		var suckerHolder = controller.arm.robotArm.getObjectByName('thirdJoint_N');
+		var catchedObject = suckerHolder.getObjectByName(controller.catchedObjectName);
+		suckerHolder.updateMatrixWorld();
+		THREE.SceneUtils.detach(catchedObject,suckerHolder,virtualFactory.scene);
+		var sinkParam = {
+			object:catchedObject,
+			virtualFactory:virtualFactory,
+			disappearZ:0
+		}
+		var sink = function(sinkParam){
+			sinkParam.object.position.z -= 5;
+			sinkParam.virtualFactory.render();
+			if(sinkParam.object.position.z>=sinkParam.disappearZ){
+				setTimeout(sink,30,sinkParam);
+			}else{
+				sinkParam.virtualFactory.scene.remove(sinkParam.object);
+				sinkParam.virtualFactory.render();
+			}
+		};
+		sink(sinkParam);
+		controller.catchedObjectName = '';
+		controller.release();
+	};
+
 	//mode one is the default mode for this robot arm
 	//Normally it can finish the process 'catch - release - recatch' along a fixed footprint
 	controller.runModeOne = function(process){
@@ -208,12 +283,6 @@ function buildController(arm){
 
 		var move = function(params){
 			var controller = params.controller;
-			if(true===controller.stop){
-				if(params.process.stopCallBack){
-					params.process.stopCallBack.call(this,controller);
-				}
-				return;
-			}
 			var nextFunction = '';
 			//signal method is a judgement which decides whether go to the next action.
 			var signalMethod = '';
@@ -226,13 +295,25 @@ function buildController(arm){
 					setTimeout(move,20,params);
 				}else{
 					controller.lastRotateResult='STOP';
-					if(signalMethod.call(this,controller)){
+					if(signalMethod.call(this,controller,params.process.cooperator)){
 						params.doFunction = nextFunction;
 						controller.lastRotateResult='KEEP_ROTATE';
 					}				
 					setTimeout(move,20,params);
 				}
 			}else{
+				if('stopped'===controller.status){
+					if(params.process.stopCallBack&&true===controller.stopSignal){
+						params.process.stopCallBack.call(this,controller,params.process.cooperator);
+						controller.stopSignal = false;
+					}
+					setTimeout(move,20,params);
+					return;
+				}
+				if(params.process.resumeCallBack&&true===controller.resumeSignal){
+					params.process.resumeCallBack.call(this,controller,params.process.cooperator);
+					controller.resumeSignal = false;
+				}
 				if('KEEP_ROTATE'=== controller.lastRotateResult){
 					params.doFunction.doAction.call(this,controller);
 					controller.arm.virtualFactory.render();
@@ -245,7 +326,7 @@ function buildController(arm){
 							signalMethod = params.process.doReleaseSignal;
 							nextFunction = params.doRelease;
 						}
-					if(signalMethod.call(this,controller)){
+					if(signalMethod.call(this,controller,params.process.cooperator)){
 						params.doFunction = nextFunction;
 						controller.lastRotateResult='KEEP_ROTATE';
 					}

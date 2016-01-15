@@ -55,7 +55,7 @@ function buildController(conveyor){
 		var allObjects = controller.conveyor.objects.values();
 		for(var i in allObjects){
 			var obj = allObjects[i];
-			if(cubeSelf.uuid===obj.uuid){
+			if(undefined!=cubeSelf&&cubeSelf.uuid===obj.uuid){
 				continue;
 			}
 			xLengthSum+= obj.onConveyorStatus==='stopped'?obj.xLength:0;
@@ -76,14 +76,8 @@ function buildController(conveyor){
 			virtualFactory:this.conveyor.virtualFactory,
 			getStoppedObjectXLengthSum:this.getStoppedObjectXLengthSum,
 			conveyorHeight:controller.conveyor.conveyorPartOne.footPrint.conveyorHeight,
-			//footPrintOneStartX: controller.conveyor.conveyorPartOne.footPrint.startPosition.x,
-			//footPrintOneStartY: controller.conveyor.conveyorPartOne.footPrint.startPosition.y,
-			//footPrintOneEndX:controller.conveyor.conveyorPartOne.footPrint.endPosition.x,
-			//footPrintOneEndY: controller.conveyor.conveyorPartOne.footPrint.endPosition.y,
-			//footPrintTwoStartX: controller.conveyor.conveyorPartTwo.footPrint.startPosition.x,
 			footPrintTwoStartY:controller.conveyor.conveyorPartTwo.footPrint.startPosition.y,
 			footPrintTwoEndX: controller.conveyor.conveyorPartTwo.footPrint.endPosition.x,
-			//footPrintTwoEndY: controller.conveyor.conveyorPartTwo.footPrint.endPosition.y,
 			stepDistance: 5
 		};
 
@@ -137,7 +131,7 @@ function createConveyorPartTwo(rootPosition,conveyorParam){
 	var yLength = conveyorParam.partTwo.width;
 	var zLength = conveyorParam.partTwo.height;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 64, 16, 16);
-	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x947874, overdraw: 0.1, shading: THREE.SmoothShading } ));
+	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x1E3703, overdraw: 0.1, shading: THREE.SmoothShading } ));
 	cube.position.z = zLength/2;
 	cube.name='conveyorPartTwo';
 	cube.footPrint = {
@@ -162,7 +156,7 @@ function createConveyorPartOne(rootPosition,conveyorParam){
 	var partTwoWidth = conveyorParam.partTwo.width;
 	var geometry = new THREE.BoxGeometry( xLength, yLength, zLength , 16, 64, 16);
 	var material = new THREE.MeshNormalMaterial();
-	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x947874, overdraw: 0.1, shading: THREE.SmoothShading } ));
+	var cube = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x1E3703, overdraw: 0.1, shading: THREE.SmoothShading } ));
 	cube.position.z = zLength/2;
 	cube.position.x = partTwoLength/2-xLength/2;
 	cube.position.y = -partTwoWidth/2-yLength/2;
