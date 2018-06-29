@@ -2,7 +2,7 @@ var Wrapper = function(vf,name,position){
 	this.virtualFactory =  vf;
 	this.name = name;
 	var baseGroup = new THREE.Object3D();
-	baseGroup.name='wrapper';
+	baseGroup.name=name+'_base';
 	if(position){
 		baseGroup.position.copy(position);
 	}
